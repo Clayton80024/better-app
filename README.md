@@ -1,4 +1,4 @@
-# Installo
+# better-app
 
 A real-time todo app with authentication, built with Next.js and [InstantDB](https://instantdb.com).
 
