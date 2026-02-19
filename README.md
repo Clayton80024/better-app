@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Installo
 
-## Getting Started
+A real-time todo app with authentication, built with Next.js and [InstantDB](https://instantdb.com).
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **Auth** – Magic code (email) sign-in
+- **Profiles** – Unique @username, display name, and DiceBear avatar selection on signup
+- **Todos** – Per-user todo list with real-time sync
+- **Cases** – Immigration case management with document upload (B2, Mindee extraction, OpenAI classification)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. **Install dependencies** (already done):
+   ```bash
+   npm install
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+2. **Connect to InstantDB** – Run the init command and follow the prompts to log in and create/link your app:
+   ```bash
+   npx instant-cli init
+   ```
+   This will:
+   - Log you in to InstantDB (opens browser)
+   - Create or link an app
+   - Add `NEXT_PUBLIC_INSTANT_APP_ID` to `.env.local`
 
-## Learn More
+3. **Push the schema and permissions**:
+   ```bash
+   npx instant-cli push schema
+   npx instant-cli push perms
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+4. **Username availability check** (optional): Add `INSTANT_APP_ADMIN_TOKEN` to `.env.local` for real-time username availability. Get it from [InstantDB dashboard](https://instantdb.com/dash) → Settings → Admin token. Without it, users can still sign up; duplicate usernames will be caught on submit.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+5. **Case document upload** (optional, for Cases feature): For uploading and classifying documents on cases:
+   - **Backblaze B2**: Add `B2_APPLICATION_KEY_ID`, `B2_APPLICATION_KEY`, `B2_BUCKET_NAME`, `B2_ENDPOINT` (e.g. `s3.us-west-002.backblazeb2.com`)
+   - **Mindee**: Add `MINDEE_API_KEY` for document extraction (passport, ID, proof of address)
+   - **OpenAI**: Add `OPENAI_API_KEY` for document classification
+   - Without these, document upload will fail; the rest of the app works.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+6. **Start the dev server**:
+   ```bash
+   npm run dev
+   ```
 
-## Deploy on Vercel
+Open [http://localhost:3000](http://localhost:3000) to use the app.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Tech Stack
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Next.js 16** – React framework
+- **InstantDB** – Real-time backend with auth
+- **DiceBear** – Avatar generation
+- **Tailwind CSS** – Styling
