@@ -16,6 +16,7 @@
     "@instantdb/admin": "^0.22.138",
     "@instantdb/react": "^0.22.138",
     "@tanstack/react-virtual": "^3.13.18",
+    "@vercel/analytics": "^1.6.1",
     "mindee": "^5.0.0-alpha2",
     "next": "16.1.6",
     "openai": "^6.22.0",
