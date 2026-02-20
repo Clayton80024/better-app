@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Toaster } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { UploadProvider } from "@/components/UploadContext";
@@ -53,6 +54,7 @@ export default function RootLayout({
             </UploadProvider>
           </WorkspaceProvider>
         </ThemeProvider>
+        <Toaster position="bottom-center" richColors closeButton />
         <Analytics />
         <SpeedInsights />
       </body>

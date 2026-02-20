@@ -3,6 +3,7 @@
 import { use, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useWorkspace } from "@/components/WorkspaceContext";
+import { db } from "@/lib/db";
 
 export default function WorkspaceLayout({
   children,
@@ -13,7 +14,23 @@ export default function WorkspaceLayout({
 }) {
   const { workspaceId } = use(params);
   const router = useRouter();
+  const { user } = db.useAuth();
   const { workspaces, setCurrentWorkspaceId, isLoading } = useWorkspace();
+
+  const { data } = db.useQuery(
+    user ? { $users: { $: { where: { id: user.id } } } } : null
+  );
+  const profile = data?.$users?.[0] as { nickname?: string | null; avatarSeed?: string | null; username?: string | null } | undefined;
+
+  useEffect(() => {
+    if (!user || !profile) return;
+    const needsProfile =
+      !profile.avatarSeed || !profile.nickname || !profile.username;
+    if (needsProfile) {
+      router.replace("/");
+      return;
+    }
+  }, [user, profile, router]);
 
   useEffect(() => {
     if (isLoading) return;

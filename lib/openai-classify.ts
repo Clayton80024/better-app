@@ -7,6 +7,8 @@ const CLASSES = [
   "proof_of_funds",
   "birth_certificate",
   "immigration_form",
+  "i_94",
+  "i_20",
   "evidence",
   "other",
 ] as const;
@@ -38,7 +40,9 @@ export async function classifyDocument(
           role: "system",
           content: `You classify immigration case documents. Reply with exactly one word from this list: ${CLASSES.join(", ")}. No other text.
 - proof_of_address: utility bills, lease, residency proof (where you live)
-- proof_of_funds: bank statements, investment statements, financial capacity proof`,
+- proof_of_funds: bank statements, investment statements, financial capacity proof
+- i_94: I-94 Arrival/Departure Record, admission stamp, electronic I-94
+- i_20: F-1 Student I-20, Form I-20, Certificate of Eligibility`,
         },
         {
           role: "user",

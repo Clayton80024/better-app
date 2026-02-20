@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { CaseDocuments } from "@/components/CaseDocuments";
 import { CaseNotes } from "@/components/CaseNotes";
+import { EditableCaseHeader } from "@/components/EditableCaseHeader";
 import { useWorkspace } from "@/components/WorkspaceContext";
 import { db } from "@/lib/db";
 
@@ -57,7 +58,11 @@ export default function CaseDashboardPage({
             },
           },
           caseDocuments: {
-            $: { where: { "case.id": caseId } },
+            $: {
+              where: {
+                and: [{ "case.id": caseId }, { deletedAt: { $isNull: true } }],
+              },
+            },
           },
         }
       : null
@@ -106,28 +111,13 @@ export default function CaseDashboardPage({
   return (
     <div className="mx-auto flex h-[calc(100vh-57px)] max-w-3xl flex-col">
       <header className="shrink-0 border-b border-zinc-200 bg-white px-4 py-4 dark:border-zinc-800 dark:bg-zinc-950">
-        <Link
-          href={`/workspace/${workspaceId}/cases`}
-          className="-ml-2 mb-3 flex min-h-[36px] min-w-[36px] items-center gap-2 text-sm text-zinc-500 transition-colors hover:text-zinc-700 dark:hover:text-zinc-300"
-        >
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          Back to cases
-        </Link>
-        <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-          {caseData.clientName}
-        </h1>
-        <div className="mt-1 flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-sm font-medium text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200">
-            {caseData.caseType}
-          </span>
-          {caseData.status && (
-            <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-sm text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
-              {caseData.status}
-            </span>
-          )}
-        </div>
+        <EditableCaseHeader
+          workspaceId={workspaceId}
+          caseId={caseId}
+          clientName={caseData.clientName}
+          caseType={caseData.caseType}
+          status={caseData.status}
+        />
         {documents.length > 0 && (
           <div className="mt-3">
             <div className="mb-1.5 flex items-center justify-between text-sm">
@@ -193,8 +183,15 @@ export default function CaseDashboardPage({
                   Case Review
                 </Link>
                 <Link
-                  href={`/workspace/${workspaceId}/cases/${caseId}/forms`}
+                  href={`/workspace/${workspaceId}/cases/${caseId}/trash`}
                   className="rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                >
+                  Trash
+                </Link>
+                {/* Forms - hidden for now */}
+                <Link
+                  href={`/workspace/${workspaceId}/cases/${caseId}/forms`}
+                  className="hidden rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
                 >
                   Forms
                 </Link>

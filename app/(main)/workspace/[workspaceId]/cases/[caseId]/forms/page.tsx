@@ -3,6 +3,7 @@
 import { use, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { EditableCaseHeader } from "@/components/EditableCaseHeader";
 import { FormModeFormsPlaceholder } from "@/components/FormModeFormsPlaceholder";
 import { useWorkspace } from "@/components/WorkspaceContext";
 import { db } from "@/lib/db";
@@ -27,7 +28,7 @@ export default function CaseFormsPage({
       : null
   );
 
-  const caseData = data?.cases?.[0] as { clientName: string } | undefined;
+  const caseData = data?.cases?.[0] as { clientName: string; caseType: string; status?: string | null } | undefined;
 
   useEffect(() => {
     if (!user) router.replace("/");
@@ -67,18 +68,16 @@ export default function CaseFormsPage({
   return (
     <div className="mx-auto flex h-[calc(100vh-57px)] max-w-2xl flex-col">
       <header className="shrink-0 border-b border-zinc-200 bg-white px-4 py-4 dark:border-zinc-800 dark:bg-zinc-950">
-        <Link
-          href={`/workspace/${workspaceId}/cases/${caseId}`}
-          className="-ml-2 mb-3 flex min-h-[36px] min-w-[36px] items-center gap-2 text-sm text-zinc-500 transition-colors hover:text-zinc-700 dark:hover:text-zinc-300"
-        >
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          Back to {caseData.clientName}
-        </Link>
-        <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-          Forms · {caseData.clientName}
-        </h1>
+        <EditableCaseHeader
+          workspaceId={workspaceId}
+          caseId={caseId}
+          clientName={caseData.clientName}
+          caseType={caseData.caseType}
+          status={caseData.status}
+          backHref={`/workspace/${workspaceId}/cases/${caseId}`}
+          backLabel={`Back to ${caseData.clientName}`}
+        />
+        <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">Forms</p>
       </header>
 
       <div className="flex-1 overflow-y-auto p-4">

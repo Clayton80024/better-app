@@ -21,6 +21,8 @@ function getModelIdForClassification(
       process.env.MINDEE_FINANCIAL_MODEL_ID,
     birth_certificate: process.env.MINDEE_BIRTH_CERT_MODEL_ID,
     immigration_form: process.env.MINDEE_IMMIGRATION_MODEL_ID,
+    i_94: process.env.MINDEE_I94_MODEL_ID,
+    i_20: process.env.MINDEE_I20_MODEL_ID,
     evidence: process.env.MINDEE_EVIDENCE_MODEL_ID,
     other: undefined,
   };
