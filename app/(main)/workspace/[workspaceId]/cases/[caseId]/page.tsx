@@ -68,8 +68,10 @@ export default function CaseDashboardPage({
       : null
   );
 
-  const caseData = data?.cases?.[0] as CaseData | undefined;
-  const documents = (data?.caseDocuments ?? []) as { reviewStatus?: string | null }[];
+  type CaseQueryResult = { cases?: CaseData[]; caseDocuments?: { reviewStatus?: string | null }[] };
+  const typedData = data as CaseQueryResult | null | undefined;
+  const caseData = typedData?.cases?.[0];
+  const documents = (typedData?.caseDocuments ?? []) as { reviewStatus?: string | null }[];
   const reviewCounts = {
     approved: documents.filter((d) => (d.reviewStatus || "pending") === "approved").length,
     in_review: documents.filter((d) => (d.reviewStatus || "pending") === "in_review").length,
@@ -86,7 +88,7 @@ export default function CaseDashboardPage({
     );
   }
 
-  if (!isLoading && !caseData && data) {
+  if (!isLoading && !caseData && typedData) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-16">
         <p className="text-zinc-500 dark:text-zinc-400">Case not found</p>

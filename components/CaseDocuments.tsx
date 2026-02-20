@@ -79,7 +79,9 @@ export function CaseDocuments({
       : null
   );
 
-  const documents = (data?.caseDocuments ?? []) as CaseDocument[];
+  type DocumentsQueryResult = { caseDocuments?: CaseDocument[] };
+  const typedData = data as DocumentsQueryResult | null | undefined;
+  const documents = (typedData?.caseDocuments ?? []) as CaseDocument[];
 
   const grouped = documents.reduce<Record<string, CaseDocument[]>>((acc, doc) => {
     const key = doc.classification || "other";

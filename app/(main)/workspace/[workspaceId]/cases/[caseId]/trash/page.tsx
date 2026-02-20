@@ -68,12 +68,10 @@ export default function CaseTrashPage({
       : null
   );
 
-  const caseData = data?.cases?.[0] as {
-    clientName: string;
-    caseType: string;
-    status?: string | null;
-  } | undefined;
-  const deletedDocuments = (data?.caseDocuments ?? []) as CaseDocument[];
+  type TrashQueryResult = { cases?: { clientName: string; caseType: string; status?: string | null }[]; caseDocuments?: CaseDocument[] };
+  const typedData = data as TrashQueryResult | null | undefined;
+  const caseData = typedData?.cases?.[0];
+  const deletedDocuments = (typedData?.caseDocuments ?? []) as CaseDocument[];
 
   useEffect(() => {
     if (!user) router.replace("/");

@@ -29,7 +29,7 @@ export async function GET(
   }
 
   const { id: caseId, docId } = await params;
-  const docResult = await db.query({
+  const docResult = (await db.query({
     caseDocuments: {
       $: {
         where: {
@@ -40,7 +40,7 @@ export async function GET(
         },
       },
     },
-  });
+  })) as { caseDocuments?: { storageKey: string }[] };
 
   const doc = docResult.caseDocuments?.[0] as { storageKey: string } | undefined;
   if (!doc?.storageKey) {

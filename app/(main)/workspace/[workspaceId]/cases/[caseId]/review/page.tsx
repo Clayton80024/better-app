@@ -301,10 +301,12 @@ export default function CaseReviewPage({
       : null
   );
 
-  const caseData = data?.cases?.[0] as { id: string; clientName: string; caseType: string; status?: string | null } | undefined;
+  type ReviewQueryResult = { cases?: { id: string; clientName: string; caseType: string; status?: string | null }[]; caseDocuments?: CaseDocument[] };
+  const typedData = data as ReviewQueryResult | null | undefined;
+  const caseData = typedData?.cases?.[0];
   const documents = useMemo(
-    () => (data?.caseDocuments ?? []) as CaseDocument[],
-    [data?.caseDocuments]
+    () => (typedData?.caseDocuments ?? []) as CaseDocument[],
+    [typedData?.caseDocuments]
   );
   const reviewCounts = {
     approved: documents.filter((d) => (d.reviewStatus || "pending") === "approved").length,
