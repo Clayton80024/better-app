@@ -7,12 +7,12 @@ const rules = {
     allow: {
       view: "isMember",
       create: "auth.id != null",
-      update: "isOwner",
+      update: "isMember",
       delete: "isOwner",
     },
     bind: {
-      isMember: "auth.id != null && (auth.id == data.ref('owner.id') || auth.id in data.ref('members.id'))",
-      isOwner: "auth.id != null && auth.id == data.ref('owner.id')",
+      isMember: "auth.id != null && (auth.id in data.ref('owner.id') || auth.id in data.ref('members.id'))",
+      isOwner: "auth.id != null && auth.id in data.ref('owner.id')",
     },
   },
   todos: {

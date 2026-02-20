@@ -51,6 +51,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       : null
   );
   const userWithProfile = user && data?.$users?.[0] ? { ...user, ...data.$users[0] } : null;
+  const needsProfile =
+    userWithProfile &&
+    (!userWithProfile.avatarSeed ||
+      !userWithProfile.nickname ||
+      !userWithProfile.username);
 
   if (!userWithProfile) {
     return (
@@ -161,6 +166,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               >
                 Cases
               </Link>
+              <Link
+                href="/settings"
+                className={navLinkClass(pathname === "/settings")}
+              >
+                Settings
+              </Link>
             </nav>
           </div>
 
@@ -222,6 +233,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 >
                   Cases
                 </Link>
+                <Link
+                  href="/settings"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={navLinkClass(pathname === "/settings")}
+                >
+                  Settings
+                </Link>
               </nav>
               <div className="mt-3 px-3">
                 <p className="mb-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
@@ -233,12 +251,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <div className="mb-3 flex items-center gap-3">
                   <UserAvatar seed={userWithProfile.avatarSeed || "default"} size={40} />
                   <div>
-                    <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
-                      {userWithProfile.nickname}
-                    </p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                      {userWithProfile.username ? `@${userWithProfile.username}` : ""}
-                    </p>
+                    {needsProfile ? (
+                      <Link
+                        href="/"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="text-sm font-medium text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
+                      >
+                        Complete profile →
+                      </Link>
+                    ) : (
+                      <>
+                        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
+                          {userWithProfile.nickname}
+                        </p>
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                          {userWithProfile.username ? `@${userWithProfile.username}` : ""}
+                        </p>
+                      </>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">

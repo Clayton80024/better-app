@@ -76,6 +76,9 @@ export function UploadProvider({ children }: { children: ReactNode }) {
   const processingCountRef = useRef(0);
   const processNextRef = useRef<(() => void) | null>(null);
   const tokenRef = useRef<string | null>(null);
+  const recentAddKeysRef = useRef<Map<string, number>>(new Map());
+  const recentlyUploadedRef = useRef<Map<string, number>>(new Map());
+  const processingIdsRef = useRef<Set<string>>(new Set());
   queueRef.current = uploadQueue;
 
   const updateItem = useCallback((id: string, updates: Partial<UploadItem>) => {
@@ -87,6 +90,23 @@ export function UploadProvider({ children }: { children: ReactNode }) {
   const processOne = useCallback(
     async (item: UploadItem, token: string) => {
       const { id, caseId, file } = item;
+      const uploadKey = `${caseId}:${file.name}:${file.size}`;
+      const now = Date.now();
+      const uploaded = recentlyUploadedRef.current;
+      for (const [k, t] of [...uploaded]) {
+        if (now - t > 5000) uploaded.delete(k);
+      }
+      if (uploaded.has(uploadKey)) {
+        processingCountRef.current -= 1;
+        updateItem(id, { status: "done", progress: 100 });
+        setTimeout(() => {
+          processingIdsRef.current.delete(id);
+          processNextRef.current?.();
+        }, 50);
+        return;
+      }
+      uploaded.set(uploadKey, now);
+
       updateItem(id, { status: "uploading", progress: 0 });
 
       try {
@@ -104,11 +124,15 @@ export function UploadProvider({ children }: { children: ReactNode }) {
 
         updateItem(id, { status: "done", progress: 100 });
       } catch (err) {
+        uploaded.delete(uploadKey);
         const msg = err instanceof Error ? err.message : "Upload failed";
         updateItem(id, { status: "error", error: msg });
       } finally {
         processingCountRef.current -= 1;
-        processNextRef.current?.();
+        setTimeout(() => {
+          processingIdsRef.current.delete(id);
+          processNextRef.current?.();
+        }, 50);
       }
     },
     [updateItem]
@@ -118,11 +142,14 @@ export function UploadProvider({ children }: { children: ReactNode }) {
     const token = tokenRef.current;
     if (!token) return;
 
-    const pending = queueRef.current.filter((i) => i.status === "pending");
+    const pending = queueRef.current.filter(
+      (i) => i.status === "pending" && !processingIdsRef.current.has(i.id)
+    );
     const slots = MAX_CONCURRENT - processingCountRef.current;
     const toStart = pending.slice(0, Math.max(0, slots));
 
     toStart.forEach((item) => {
+      processingIdsRef.current.add(item.id);
       processingCountRef.current += 1;
       processOne(item, token);
     });
@@ -143,15 +170,42 @@ export function UploadProvider({ children }: { children: ReactNode }) {
       });
       if (valid.length === 0) return;
 
-      const newItems: UploadItem[] = valid.map((file) => ({
-        id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-        caseId,
-        file,
-        status: "pending" as const,
-        progress: 0,
-      }));
+      const now = Date.now();
+      const DEDUP_MS = 3000;
+      const recent = recentAddKeysRef.current;
+      for (const [k, t] of recent) {
+        if (now - t > DEDUP_MS) recent.delete(k);
+      }
+      const fileKey = (f: File) => `${f.name}:${f.size}`;
+      const toAdd = valid.filter((f) => {
+        const key = `${caseId}:${fileKey(f)}`;
+        if (recent.has(key)) return false;
+        recent.set(key, now);
+        return true;
+      });
+      if (toAdd.length === 0) return;
 
       setUploadQueue((q) => {
+        const existingKeys = new Set(
+          q
+            .filter(
+              (i) =>
+                i.caseId === caseId &&
+                (i.status === "pending" || i.status === "uploading" || i.status === "extracting")
+            )
+            .map((i) => fileKey(i.file))
+        );
+        const toAddFiltered = toAdd.filter((f) => !existingKeys.has(fileKey(f)));
+        if (toAddFiltered.length === 0) return q;
+
+        const newItems: UploadItem[] = toAddFiltered.map((file) => ({
+          id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          caseId,
+          file,
+          status: "pending" as const,
+          progress: 0,
+        }));
+
         const next = [...q, ...newItems];
         setTimeout(() => processNextRef.current?.(), 50);
         return next;
@@ -161,6 +215,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
   );
 
   const removeFromQueue = useCallback((id: string) => {
+    processingIdsRef.current.delete(id);
     setUploadQueue((q) => {
       const next = q.filter((i) => i.id !== id);
       setTimeout(() => processNextRef.current?.(), 50);
@@ -170,6 +225,12 @@ export function UploadProvider({ children }: { children: ReactNode }) {
 
   const clearCompleted = useCallback((caseId?: string) => {
     setUploadQueue((q) => {
+      const toRemove = q.filter(
+        (i) =>
+          (i.status === "done" || i.status === "error") &&
+          (!caseId || i.caseId === caseId)
+      );
+      toRemove.forEach((i) => processingIdsRef.current.delete(i.id));
       const next = q.filter(
         (i) =>
           !(

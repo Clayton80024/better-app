@@ -45,6 +45,7 @@ const _schema = i.schema({
       reviewStatus: i.string().optional(),
       createdAt: i.number().indexed(),
       processedAt: i.number().optional(),
+      deletedAt: i.number().optional().indexed(),
     }),
     todos: i.entity({
       text: i.string(),

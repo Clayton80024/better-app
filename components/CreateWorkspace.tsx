@@ -44,8 +44,7 @@ export function CreateWorkspace({ onCreated }: { onCreated?: () => void }) {
         Create a workspace
       </h2>
       <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
-        Workspaces help you organize your tasks, todos, and conversations. Create one to get
-        started.
+        Workspaces help you organize. Create one to get started.
       </p>
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
