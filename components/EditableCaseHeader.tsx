@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { db } from "@/lib/db";
-import { CASE_TYPES, type CaseType } from "@/lib/case-types";
+import { CASE_TYPES } from "@/lib/case-types";
 
 type EditableCaseHeaderProps = {
   workspaceId: string;
@@ -28,15 +28,23 @@ export function EditableCaseHeader({
   const defaultBackHref = `/workspace/${workspaceId}/cases`;
   const href = backHref ?? defaultBackHref;
   const [clientName, setClientName] = useState(initialClientName);
-  const [caseType, setCaseType] = useState(initialCaseType);
+  const isInitialCustom = !CASE_TYPES.includes(initialCaseType as (typeof CASE_TYPES)[number]);
+  const [caseType, setCaseType] = useState(isInitialCustom ? "Other" : initialCaseType);
+  const [customCaseType, setCustomCaseType] = useState(isInitialCustom ? initialCaseType : "");
   const [status, setStatus] = useState(initialStatus ?? "");
   const [editingField, setEditingField] = useState<"clientName" | "caseType" | "status" | null>(null);
+
+  const resolvedCaseType = caseType === "Other" ? customCaseType.trim() : caseType;
 
   useEffect(() => {
     if (editingField !== "clientName") setClientName(initialClientName);
   }, [initialClientName, editingField]);
   useEffect(() => {
-    if (editingField !== "caseType") setCaseType(initialCaseType);
+    if (editingField !== "caseType") {
+      const isCustom = !CASE_TYPES.includes(initialCaseType as (typeof CASE_TYPES)[number]);
+      setCaseType(isCustom ? "Other" : initialCaseType);
+      setCustomCaseType(isCustom ? initialCaseType : "");
+    }
   }, [initialCaseType, editingField]);
   useEffect(() => {
     if (editingField !== "status") setStatus(initialStatus ?? "");
@@ -63,18 +71,22 @@ export function EditableCaseHeader({
   }, [caseId, clientName, initialClientName]);
 
   const saveCaseType = useCallback(async () => {
-    if (caseType === initialCaseType) {
+    if (resolvedCaseType === initialCaseType) {
+      setEditingField(null);
+      return;
+    }
+    if (caseType === "Other" && !customCaseType.trim()) {
       setEditingField(null);
       return;
     }
     try {
-      await db.transact([db.tx.cases[caseId].update({ caseType })]);
+      await db.transact([db.tx.cases[caseId].update({ caseType: resolvedCaseType })]);
       toast.success("Case type updated");
     } catch {
       toast.error("Failed to update");
     }
     setEditingField(null);
-  }, [caseId, caseType, initialCaseType]);
+  }, [caseId, resolvedCaseType, initialCaseType, caseType, customCaseType]);
 
   const saveStatus = useCallback(async () => {
     const trimmed = status.trim();
@@ -132,33 +144,62 @@ export function EditableCaseHeader({
         )}
         <div className="mt-1 flex flex-wrap items-center gap-2">
           {editingField === "caseType" ? (
-            <select
-              value={caseType}
-              onChange={(e) => setCaseType(e.target.value as CaseType)}
-              onBlur={saveCaseType}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") saveCaseType();
-                if (e.key === "Escape") {
-                  setCaseType(initialCaseType);
-                  setEditingField(null);
+            <div
+              className="flex flex-wrap items-center gap-2"
+              onBlur={(e) => {
+                if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                  saveCaseType();
                 }
               }}
-              autoFocus
-              className="rounded-full border border-emerald-300 bg-white px-2.5 py-0.5 text-sm font-medium text-emerald-800 outline-none focus:border-emerald-500 dark:border-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-200"
             >
-              {CASE_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
+              <select
+                value={caseType}
+                onChange={(e) => setCaseType(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") saveCaseType();
+                  if (e.key === "Escape") {
+                    const isCustom = !CASE_TYPES.includes(initialCaseType as (typeof CASE_TYPES)[number]);
+                    setCaseType(isCustom ? "Other" : initialCaseType);
+                    setCustomCaseType(isCustom ? initialCaseType : "");
+                    setEditingField(null);
+                  }
+                }}
+                autoFocus
+                className="rounded-full border border-emerald-300 bg-white px-2.5 py-0.5 text-sm font-medium text-emerald-800 outline-none focus:border-emerald-500 dark:border-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-200"
+              >
+                {CASE_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+              {caseType === "Other" && (
+                <input
+                  type="text"
+                  value={customCaseType}
+                  onChange={(e) => setCustomCaseType(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") saveCaseType();
+                    if (e.key === "Escape") {
+                      const isCustom = !CASE_TYPES.includes(initialCaseType as (typeof CASE_TYPES)[number]);
+                      setCaseType(isCustom ? "Other" : initialCaseType);
+                      setCustomCaseType(isCustom ? initialCaseType : "");
+                      setEditingField(null);
+                    }
+                  }}
+                  placeholder="Type your case type"
+                  className="rounded-full border border-emerald-300 bg-white px-2.5 py-0.5 text-sm font-medium text-emerald-800 outline-none focus:border-emerald-500 dark:border-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-200 dark:placeholder-emerald-400"
+                  maxLength={100}
+                />
+              )}
+            </div>
           ) : (
             <span
               onClick={() => setEditingField("caseType")}
               className="cursor-pointer rounded-full bg-emerald-100 px-2.5 py-0.5 text-sm font-medium text-emerald-800 transition-colors hover:bg-emerald-200 dark:bg-emerald-900/50 dark:text-emerald-200 dark:hover:bg-emerald-900/70"
               title="Click to edit"
             >
-              {caseType}
+              {initialCaseType}
             </span>
           )}
           {editingField === "status" ? (

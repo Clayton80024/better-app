@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { db } from "@/lib/db";
 import { id } from "@instantdb/react";
 import { useWorkspace } from "@/components/WorkspaceContext";
-import { CASE_TYPES, type CaseType } from "@/lib/case-types";
+import { CASE_TYPES } from "@/lib/case-types";
 import { useRouter } from "next/navigation";
 
 export function CreateCaseModal({
@@ -19,13 +19,20 @@ export function CreateCaseModal({
   const { user } = db.useAuth();
   const { currentWorkspace } = useWorkspace();
   const [clientName, setClientName] = useState("");
-  const [caseType, setCaseType] = useState<CaseType>(CASE_TYPES[0]);
+  const [caseType, setCaseType] = useState<string>(CASE_TYPES[0]);
+  const [customCaseType, setCustomCaseType] = useState("");
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");
+
+  const resolvedCaseType = caseType === "Other" ? customCaseType.trim() : caseType;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!user || !currentWorkspace || !clientName.trim()) return;
+    if (caseType === "Other" && !customCaseType.trim()) {
+      setError("Please enter a case type");
+      return;
+    }
     setCreating(true);
     setError("");
     try {
@@ -35,7 +42,7 @@ export function CreateCaseModal({
         db.tx.cases[caseId]
           .update({
             clientName: clientName.trim(),
-            caseType,
+            caseType: resolvedCaseType,
             status: "active",
             createdAt: now,
           })
@@ -43,6 +50,7 @@ export function CreateCaseModal({
       ]);
       setClientName("");
       setCaseType(CASE_TYPES[0]);
+      setCustomCaseType("");
       onOpenChange(false);
       router.push(`/workspace/${currentWorkspace.id}/cases/${caseId}`);
     } catch (err) {
@@ -99,7 +107,7 @@ export function CreateCaseModal({
               <select
                 id="caseType"
                 value={caseType}
-                onChange={(e) => setCaseType(e.target.value as CaseType)}
+                onChange={(e) => setCaseType(e.target.value)}
                 className="w-full appearance-none rounded-xl border border-zinc-300 bg-white py-2.5 pl-4 pr-10 text-zinc-900 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-50 dark:focus:border-emerald-500 dark:focus:ring-emerald-500/30"
               >
                 {CASE_TYPES.map((type) => (
@@ -117,6 +125,16 @@ export function CreateCaseModal({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
             </div>
+            {caseType === "Other" && (
+              <input
+                type="text"
+                value={customCaseType}
+                onChange={(e) => setCustomCaseType(e.target.value)}
+                placeholder="Type your case type"
+                className="mt-2 w-full rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-zinc-900 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-50 dark:placeholder-zinc-500 dark:focus:border-emerald-500 dark:focus:ring-emerald-500/30"
+                maxLength={100}
+              />
+            )}
           </div>
           {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
           <div className="flex gap-2">
@@ -129,7 +147,7 @@ export function CreateCaseModal({
             </button>
             <button
               type="submit"
-              disabled={creating || !clientName.trim()}
+              disabled={creating || !clientName.trim() || (caseType === "Other" && !customCaseType.trim())}
               className="flex-1 rounded-lg bg-emerald-600 px-4 py-2.5 font-medium text-white transition-colors hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50"
             >
               {creating ? "Creating..." : "Create"}
